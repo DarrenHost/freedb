@@ -15,7 +15,8 @@ app.get('/', async (c) => {
     .navbar{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:20px 40px;display:flex;justify-content:space-between;align-items:center}
     .navbar h1{font-size:1.8em}
     .navbar h1 span{color:var(--primary)}
-    .navbar-links a{color:#fff;text-decoration:none;margin-left:20px;display:flex;align-items:center;gap:6px}
+    .navbar-links{display:flex;gap:30px}
+    .navbar-links a{color:#fff;text-decoration:none;display:flex;align-items:center;gap:6px}
     .navbar-links a:hover{opacity:0.8}
     .container{max-width:1400px;margin:0 auto;padding:40px}
     .intro{background:#fff;border-radius:12px;padding:30px;margin-bottom:30px;border:1px solid var(--border)}
@@ -58,7 +59,7 @@ app.get('/', async (c) => {
     </div>
     <div class="alert">
       <strong>🔐 认证说明：</strong> 调用 API 时需要在 Header 中添加 Token
-      <code>Authorization: Bearer ***</code> 或 <code>X-API-Token: YOUR_TOKEN</code>
+      <code>Authorization: Bearer *** 或 <code>X-API-Token: YOUR_TOKEN</code>
     </div>
     <div class="quickstart">
       <h3>🚀 快速开始</h3>
