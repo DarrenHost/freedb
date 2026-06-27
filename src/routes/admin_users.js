@@ -91,7 +91,8 @@ app.get('/users', async (c) => {
       </form>
     </div>
   </div>
-  <script>
+  <script src="/assets/js/md5.js"></script>
+<script>
     let allData=[],filteredData=[];
     async function loadData(){
       try{
