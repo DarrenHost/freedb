@@ -86,7 +86,15 @@ app.get('/visits', async (c) => {
       </table>
     </div>
   </main>
-  <script src="/assets/js/visits.js"></script>
+  <script>
+let allData=[],filteredData=[],page=1,pageSize=50;
+async function loadData(){try{const r=await fetch('/api/admin/visits');const d=await r.json();if(d.success){allData=d.data;filteredData=[...allData];renderTable();calcStats();}else{document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="empty">加载失败</td></tr>';} }catch(e){document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="empty">加载失败</td></tr>';} }
+function calcStats(){const t=allData.length,h=allData.filter(d=>new Date(d.visit_time).toDateString()===new Date().toDateString()).length,a=t>0?Math.round(allData.reduce((s,d)=>s+(d.response_time_ms||0),0)/t):0,e=t>0?((allData.filter(d=>d.status_code>=400).length/t)*100).toFixed(1):0;const e1=document.getElementById('stat-total'),e2=document.getElementById('stat-today'),e3=document.getElementById('stat-avg'),e4=document.getElementById('stat-error');if(e1)e1.textContent=t;if(e2)e2.textContent=h;if(e3)e3.textContent=a+'ms';if(e4)e4.textContent=e+'%';}
+function filterData(){const m=document.getElementById('filter-method').value,s=document.getElementById('filter-status').value,h=document.getElementById('search').value.toLowerCase(),t=document.getElementById('filter-time').value;filteredData=allData.filter(d=>{if(m&&d.method!==m)return false;if(s){const x=d.status_code,c=s.replace('x','');if(x<c*100||x>=(c+1)*100)return false;}if(h&&!d.request_path.toLowerCase().includes(h)&&!d.remote_ip?.includes(h))return false;if(t&&new Date(d.visit_time)<new Date(t))return false;return true;});page=1;renderTable();}
+function renderTable(){const t=document.getElementById('table-body'),h=(page-1)*pageSize,a=h+pageSize,x=filteredData.slice(h,a);if(x.length===0){t.innerHTML='<tr><td colspan="7" class="empty">暂无数据</td></tr>';return;}t.innerHTML=x.map(d=>\`<tr><td>\${new Date(d.visit_time).toLocaleString()}</td><td><span class="method method-\${d.method.toLowerCase()}">\${d.method}</span></td><td class="truncate">\${d.request_path}\${d.query_string?'?'+d.query_string.substring(0,50):''}</td><td><span class="status status-\${Math.floor(d.status_code/100)}xx">\${d.status_code}</span></td><td>\${d.response_time_ms||0}ms</td><td>\${d.remote_ip||'-'}</td><td class="truncate">\${d.user_agent||'-'}</td></tr>\`).join('');renderPagination();}
+function renderPagination(){const t=Math.ceil(filteredData.length/pageSize),p=document.getElementById('pagination');if(!p||t<=1){if(p)p.innerHTML='';return;}p.innerHTML=Array.from({length:t},(_,i)=>\`<button class="page-btn \${i+1===page?'active':''}" onclick="page=\${i+1};renderTable()">\${i+1}</button>\`).join('');}
+loadData();
+  </script>
 </body>
 </html>`);
 });
