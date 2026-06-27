@@ -34,11 +34,30 @@ CREATE TABLE IF NOT EXISTS app_versions (
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 创建索引
 CREATE INDEX IF NOT EXISTS idx_app_versions_code ON app_versions(code);
 CREATE INDEX IF NOT EXISTS idx_app_versions_parent_code ON app_versions(parent_code);
 CREATE INDEX IF NOT EXISTS idx_app_versions_package ON app_versions(package);
 CREATE INDEX IF NOT EXISTS idx_app_versions_status ON app_versions(status);
+
+-- ============================================
+-- JSON 数据表
+-- ============================================
+CREATE TABLE IF NOT EXISTS json_data (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  parent_name TEXT,
+  content TEXT,
+  status INTEGER DEFAULT 1,
+  create_user TEXT,
+  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_user TEXT,
+  update_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  CHECK (status IN (0, 1, 2))
+);
+
+CREATE INDEX IF NOT EXISTS idx_json_data_name ON json_data(name);
+CREATE INDEX IF NOT EXISTS idx_json_data_parent_name ON json_data(parent_name);
+CREATE INDEX IF NOT EXISTS idx_json_data_status ON json_data(status);
 
 -- ============================================
 -- 示例数据
@@ -56,3 +75,10 @@ INSERT OR IGNORE INTO app_versions (name, code, parent_code, package, version, u
   ('FreeDB API', 'freedb-api', NULL, 'com.freedb.api', '1.0.0', 'https://api.freedb.com', 'active', 'admin'),
   ('FreeDB 移动端', 'freedb-mobile', 'freedb-api', 'com.freedb.mobile', '1.0.0', 'https://mobile.freedb.com', 'active', 'admin'),
   ('测试应用', 'test-app', NULL, 'com.test.app', '0.1.0', 'https://test.freedb.com', 'inactive', 'test');
+
+-- JSON 数据示例
+INSERT OR IGNORE INTO json_data (name, parent_name, content, status, create_user) VALUES 
+  ('首页配置', NULL, '{"title": "FreeDB", "subtitle": "轻量级数据库解决方案", "theme": "dark"}', 1, 'admin'),
+  ('用户设置', NULL, '{"language": "zh-CN", "timezone": "UTC+8", "notifications": true}', 1, 'admin'),
+  ('导航菜单', '首页配置', '{"items": [{"name": "首页", "path": "/"}, {"name": "关于", "path": "/about"}]}', 1, 'admin'),
+  ('测试数据', NULL, '{"test": true, "value": 123}', 0, 'test');
