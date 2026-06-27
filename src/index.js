@@ -10,11 +10,14 @@ import htmlRouter from './routes/html.js';
 import demoRouter from './routes/demo.js';
 import demoJsonDataRouter from './routes/demo_json_data.js';
 
-// 后台管理路由
+// 后台管理路由（页面）
 import adminDashboardRouter from './routes/admin_dashboard.js';
 import adminUsersRouter from './routes/admin_users.js';
 import adminVisitsRouter from './routes/admin_visits.js';
 import adminTokensRouter from './routes/admin_tokens.js';
+
+// 后台管理 API 路由
+import adminApiRouter from './routes/admin_api.js';
 
 // 业务 API 路由
 import apiUsersRouter from './routes/api_users.js';
@@ -37,7 +40,7 @@ app.use('*', prettyJSON());
 // API 访问记录中间件（仅记录 /api/ 路径，排除管理后台 API）
 const visitMiddleware = createVisitMiddleware();
 app.use('/api/*', async (c, next) => {
-  if (c.req.path.startsWith('/admin/api/')) {
+  if (c.req.path.startsWith('/api/admin/')) {
     return await next();
   }
   await visitMiddleware(c, next);
@@ -53,11 +56,14 @@ app.route('/', htmlRouter);
 app.route('/demo', demoRouter);
 app.route('/demo', demoJsonDataRouter);
 
-// 管理后台路由
+// 管理后台页面路由
 app.route('/admin', adminDashboardRouter);
 app.route('/admin', adminUsersRouter);
 app.route('/admin', adminVisitsRouter);
 app.route('/admin', adminTokensRouter);
+
+// 管理后台 API 路由
+app.route('/api/admin', adminApiRouter);
 
 // 业务 API 路由
 app.route('/api/users', apiUsersRouter);
