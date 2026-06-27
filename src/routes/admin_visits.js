@@ -15,6 +15,14 @@ app.get('/visits', async (c) => {
   <style>
     :root{--primary:#667eea;--bg:#f5f7fa;--border:#e0e0e0;--text:#262626}
     *{margin:0;padding:0;box-sizing:border-box}
+    body{display:flex;min-height:100vh}
+    .sidebar{width:250px;background:#1a1a2e;color:#fff;position:fixed;height:100vh}
+    .sidebar-header{padding:20px;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .sidebar-header h2{font-size:1.5em}
+    .sidebar-header h2 span{color:var(--primary)}
+    .sidebar-nav a{display:flex;align-items:center;gap:10px;padding:12px 20px;color:rgba(255,255,255,0.8);text-decoration:none}
+    .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(255,255,255,0.1);color:#fff}
+    .main-content{flex:1;margin-left:250px;padding:30px}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
     .navbar{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:20px 40px;display:flex;justify-content:space-between;align-items:center}
     .navbar h1{font-size:1.8em}
@@ -54,6 +62,17 @@ app.get('/visits', async (c) => {
   </style>
 </head>
 <body>
+  <aside class="sidebar">
+    <div class="sidebar-header"><h2>Free<span>DB</span></h2></div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard"><span>🏠</span> 控制台</a>
+      <a href="/admin/users"><span>👤</span> 用户管理</a>
+      <a href="/admin/tokens"><span>🔑</span> Token 管理</a>
+      <a href="/admin/visits" class="active"><span>📊</span> 访问统计</a>
+      <a href="/"><span>📚</span> API 文档</a>
+    </nav>
+  </aside>
+  <main class="main-content">
   <nav class="navbar">
     <h1>📊 Free<span>DB</span> 访问统计</h1>
     <a href="/">← 返回 API 文档</a>
@@ -138,7 +157,7 @@ app.get('/visits', async (c) => {
     }
     loadData();
   </script>
-</body>
+</main></body>
 </html>`);
 });
 

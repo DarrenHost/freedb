@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
+  pwd TEXT,
   status TEXT DEFAULT 'active',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -115,11 +116,11 @@ CREATE INDEX IF NOT EXISTS idx_tokens_status ON tokens(status);
 -- 示例数据
 -- ============================================
 
--- 用户示例数据
-INSERT OR IGNORE INTO users (name, email, status) VALUES 
-  ('Alice', 'alice@example.com', 'active'),
-  ('Bob', 'bob@example.com', 'active'),
-  ('Charlie', 'charlie@example.com', 'inactive');
+-- 用户示例数据（密码：admin123 的 MD5）
+INSERT OR IGNORE INTO users (name, email, pwd, status) VALUES 
+  ('admin', 'admin@example.com', '0192023a7bbd73250516f069df18b500', 'active'),
+  ('Alice', 'alice@example.com', NULL, 'active'),
+  ('Bob', 'bob@example.com', NULL, 'active');
 
 -- 应用版本示例数据
 INSERT OR IGNORE INTO app_versions (name, code, parent_code, package, version, url, status, create_user) VALUES 

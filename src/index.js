@@ -9,6 +9,8 @@ import appVersionsRouter from './routes/app_versions.js';
 import jsonDataRouter from './routes/json_data.js';
 import demoRouter from './routes/demo.js';
 import demoJsonDataRouter from './routes/demo_json_data.js';
+import adminDashboardRouter from './routes/admin_dashboard.js';
+import adminUsersRouter from './routes/admin_users.js';
 import adminVisitsRouter from './routes/admin_visits.js';
 import adminTokensRouter from './routes/admin_tokens.js';
 import { createVisitMiddleware } from './middleware/visit_logger.js';
@@ -38,6 +40,8 @@ app.route('/demo', demoRouter);
 app.route('/demo', demoJsonDataRouter);
 
 // 管理后台（不记录访问）
+app.route('/admin', adminDashboardRouter);
+app.route('/admin', adminUsersRouter);
 app.route('/admin', adminVisitsRouter);
 app.route('/admin', adminTokensRouter);
 
