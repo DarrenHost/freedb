@@ -17,10 +17,9 @@ function generateUniqueId() {
 /**
  * 获取客户端真实 IP
  * @param {Request} request 
- * @param {Object} env
  * @returns {string}
  */
-function getClientIP(request, env) {
+function getClientIP(request) {
   // 检查 X-Forwarded-For
   const forwarded = request.headers.get('X-Forwarded-For');
   if (forwarded) {
@@ -33,15 +32,14 @@ function getClientIP(request, env) {
     return cfIP;
   }
   
-  // 返回空或默认值
   return 'unknown';
 }
 
 /**
- * 访问记录中间件
- * @param {Object} env - Cloudflare 环境对象
+ * 创建访问记录中间件
+ * @returns {Function} Hono 中间件函数
  */
-export async function visitLogger(env) {
+export function createVisitMiddleware() {
   return async (c, next) => {
     const startTime = Date.now();
     
@@ -49,73 +47,59 @@ export async function visitLogger(env) {
     await next();
     
     try {
-      // 获取请求信息
       const request = c.req.raw;
       const url = new URL(request.url);
       
-      // 生成访问 ID
+      // 只在 /api/ 路径下记录
+      if (!url.pathname.startsWith('/api/')) {
+        return;
+      }
+      
       const visitId = generateUniqueId();
-      
-      // 获取会话 ID（从 Cookie）
       const sessionId = c.req.header('Cookie')?.match(/session_id=([^;]+)/)?.[1] || null;
-      
-      // 获取用户 ID（从请求头或 Cookie，实际项目中从认证系统获取）
       const userId = c.req.header('X-User-ID') || 
                      c.req.header('Authorization')?.split(' ')[1] || 
                      null;
-      
-      // 获取 Referer
       const referrer = request.headers.get('Referer');
-      
-      // 获取 User-Agent
       const userAgent = request.headers.get('User-Agent');
-      
-      // 获取 IP 和端口
-      const remoteIP = getClientIP(request, env);
+      const remoteIP = getClientIP(request);
       const remotePort = parseInt(request.headers.get('X-Forwarded-Port') || '0');
-      
-      // 服务器信息
       const serverIP = url.hostname;
       const serverPort = parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80);
-      
-      // 响应状态码
       const statusCode = c.res.status;
-      
-      // 响应时间
       const responseTime = Date.now() - startTime;
       
-      // 插入访问记录
-      const db = env.DB;
-      await db.prepare(`
-        INSERT INTO visit_log 
-        (visit_id, visit_time, user_id, session_id, method, request_url, request_path, 
-         query_string, referrer_url, user_agent, remote_ip, remote_port, 
-         server_ip, server_port, status_code, response_time_ms)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        visitId,
-        new Date().toISOString(),
-        userId,
-        sessionId,
-        c.req.method,
-        request.url,
-        url.pathname,
-        url.search.substring(1) || null,
-        referrer,
-        userAgent,
-        remoteIP,
-        remotePort || null,
-        serverIP,
-        serverPort,
-        statusCode,
-        responseTime
-      ).run();
-      
+      const db = c.env.DB;
+      if (db) {
+        await db.prepare(`
+          INSERT INTO visit_log 
+          (visit_id, visit_time, user_id, session_id, method, request_url, request_path, 
+           query_string, referrer_url, user_agent, remote_ip, remote_port, 
+           server_ip, server_port, status_code, response_time_ms)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          visitId,
+          new Date().toISOString(),
+          userId,
+          sessionId,
+          c.req.method,
+          request.url,
+          url.pathname,
+          url.search.substring(1) || null,
+          referrer,
+          userAgent,
+          remoteIP,
+          remotePort || null,
+          serverIP,
+          serverPort,
+          statusCode,
+          responseTime
+        ).run();
+      }
     } catch (error) {
-      // 记录失败不阻断主流程
       console.error('访问记录失败:', error);
     }
   };
 }
 
-export default visitLogger;
+export default createVisitMiddleware;
