@@ -3,17 +3,15 @@
  * 自动记录所有 API 请求到 visit_log 表
  */
 
-import { v4 as uuidv4 } from 'https://cdn.skypack.dev/uuid';
-
 /**
- * 生成雪花算法 ID（简化版）
+ * 生成唯一 ID（使用 crypto API）
  * @returns {string} 唯一 ID
  */
-function generateSnowflakeId() {
+function generateUniqueId() {
   const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 8);
-  const random2 = Math.random().toString(36).substring(2, 6);
-  return `${timestamp}-${random}-${random2}`;
+  const random1 = crypto.randomUUID().replace(/-/g, '').substring(0, 8);
+  const random2 = crypto.randomUUID().replace(/-/g, '').substring(0, 4);
+  return `${timestamp}-${random1}-${random2}`;
 }
 
 /**
@@ -56,7 +54,7 @@ export async function visitLogger(env) {
       const url = new URL(request.url);
       
       // 生成访问 ID
-      const visitId = generateSnowflakeId();
+      const visitId = generateUniqueId();
       
       // 获取会话 ID（从 Cookie）
       const sessionId = c.req.header('Cookie')?.match(/session_id=([^;]+)/)?.[1] || null;
