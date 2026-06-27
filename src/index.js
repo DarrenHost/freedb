@@ -21,6 +21,9 @@ import apiUsersRouter from './routes/api_users.js';
 import apiAppVersionsRouter from './routes/api_app_versions.js';
 import apiJsonDatasRouter from './routes/api_json_datas.js';
 
+// 静态资源路由
+import staticAssetsRouter from './routes/static_assets.js';
+
 // 中间件
 import { createVisitMiddleware } from './middleware/visit_logger.js';
 
@@ -39,6 +42,9 @@ app.use('/api/*', async (c, next) => {
   }
   await visitMiddleware(c, next);
 });
+
+// 静态资源路由（必须在其他路由之前）
+app.route('/assets', staticAssetsRouter);
 
 // HTML 路由
 app.route('/', htmlRouter);
