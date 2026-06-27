@@ -19,6 +19,8 @@ app.get('/', async (c) => {
     .container{max-width:1400px;margin:0 auto;padding:40px}
     .intro{background:#fff;border-radius:12px;padding:30px;margin-bottom:30px;border:1px solid var(--border)}
     .intro h2{color:var(--primary);margin-bottom:15px}
+    .alert{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:15px;margin-bottom:20px}
+    .alert code{background:rgba(0,0,0,0.1);padding:2px 6px;border-radius:4px}
     .api-group{background:#fff;border-radius:12px;margin-bottom:30px;border:1px solid var(--border);overflow:hidden}
     .api-group-header{background:linear-gradient(135deg,var(--primary),#5568d3);color:#fff;padding:20px 30px}
     .api-group-header h3{font-size:1.5em;margin-bottom:5px}
@@ -56,17 +58,13 @@ app.get('/', async (c) => {
       <p>基于 Cloudflare D1 的轻量级数据库解决方案</p>
       <p><strong>Base URL:</strong> <code id="base"></code></p>
     </div>
+    <div class="alert">
+      <strong>🔐 认证说明：</strong> 调用 API 时需要在 Header 中添加 Token<br>
+      <code>Authorization: Bearer YOUR_TOKEN</code> 或 <code>X-API-Token: YOUR_TOKEN</code>
+    </div>
     <div class="quickstart">
       <h3>🚀 快速开始</h3>
-      <code>curl <span id="curl1"></span>/api/app-versions<br><br>curl <span id="curl2"></span>/api/json-data</code>
-    </div>
-    <div class="api-group">
-      <div class="api-group-header"><h3>👤 Users</h3></div>
-      <div class="endpoint"><span class="method get">GET</span><div><div class="path">/api/users</div><div class="desc">获取用户列表</div></div><a href="/api/users" class="btn" target="_blank">Try</a></div>
-      <div class="endpoint"><span class="method get">GET</span><div><div class="path">/api/users/:id</div><div class="desc">获取单个用户</div></div><a href="/api/users/1" class="btn" target="_blank">Try</a></div>
-      <div class="endpoint"><span class="method post">POST</span><div><div class="path">/api/users</div><div class="desc">创建用户</div></div><a href="/demo/app-versions" class="btn">Demo</a></div>
-      <div class="endpoint"><span class="method put">PUT</span><div><div class="path">/api/users/:id</div><div class="desc">更新用户</div></div><a href="/demo/app-versions" class="btn">Demo</a></div>
-      <div class="endpoint"><span class="method delete">DELETE</span><div><div class="path">/api/users/:id</div><div class="desc">删除用户</div></div><a href="/demo/app-versions" class="btn">Demo</a></div>
+      <code>curl <span id="curl1"></span>/api/app-versions \\<br>  -H "X-API-Token: YOUR_TOKEN"<br><br>curl <span id="curl2"></span>/api/json-data \\<br>  -H "X-API-Token: YOUR_TOKEN"</code>
     </div>
     <div class="api-group">
       <div class="api-group-header"><h3>📦 App Versions</h3></div>
@@ -101,7 +99,7 @@ app.get('/health', async (c) => {
 <html><head><meta charset="UTF-8"><title>Health</title>
 <style>body{font-family:monospace;background:#1a1a2e;color:#4ecca3;padding:40px}.status{font-size:2em;margin-bottom:20px}.info{background:rgba(255,255,255,0.05);padding:20px;border-radius:8px;max-width:600px}</style>
 </head><body><div class="status">✅ OK</div><div class="info" id="i"><p>Loading...</p></div>
-<script>fetch('/health').then(r=>r.json()).then(d=>{document.getElementById('i').innerHTML='<p>Status: '+d.status+'</p><p>Time: '+d.timestamp+'</p><p>Env: '+d.environment+'</p>'});</script>
+<script>fetch('/health').then(r=>r.json()).then(d=>{document.getElementById('i').innerHTML='<p>Status: '+d.status+'</p><p>Time: '+d.timestamp+'</p><p>Env: '+d.environment+'</p>';});</script>
 </body></html>`);
 });
 
