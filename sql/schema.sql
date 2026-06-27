@@ -45,7 +45,7 @@ CREATE INDEX IF NOT EXISTS idx_app_versions_status ON app_versions(status);
 -- ============================================
 CREATE TABLE IF NOT EXISTS json_data (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL UNIQUE,
   code TEXT,
   parent_name TEXT,
   parent_code TEXT,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS json_data (
   CHECK (status IN (0, 1, 2))
 );
 
-CREATE INDEX IF NOT EXISTS idx_json_data_name ON json_data(name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_json_data_name ON json_data(name);
 CREATE INDEX IF NOT EXISTS idx_json_data_code ON json_data(code);
 CREATE INDEX IF NOT EXISTS idx_json_data_parent_name ON json_data(parent_name);
 CREATE INDEX IF NOT EXISTS idx_json_data_parent_code ON json_data(parent_code);
@@ -95,7 +95,7 @@ CREATE INDEX IF NOT EXISTS idx_visit_log_path ON visit_log(request_path);
 CREATE INDEX IF NOT EXISTS idx_visit_log_status ON visit_log(status_code);
 
 -- ============================================
--- Token 管理表（新增 user_id 字段）
+-- Token 管理表
 -- ============================================
 CREATE TABLE IF NOT EXISTS tokens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
