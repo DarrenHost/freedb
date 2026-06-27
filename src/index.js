@@ -10,7 +10,7 @@ import jsonDataRouter from './routes/json_data.js';
 import demoRouter from './routes/demo.js';
 import demoJsonDataRouter from './routes/demo_json_data.js';
 import adminVisitsRouter from './routes/admin_visits.js';
-import { visitLogger } from './middleware/visit_logger.js';
+import visitLogger from './middleware/visit_logger.js';
 
 const app = new Hono();
 
@@ -21,7 +21,8 @@ app.use('*', prettyJSON());
 
 // 访问记录中间件（记录所有请求）
 app.use('*', async (c, next) => {
-  await visitLogger(c.env)(c, next);
+  const middleware = visitLogger(c.env);
+  await middleware(c, next);
 });
 
 // HTML 路由
