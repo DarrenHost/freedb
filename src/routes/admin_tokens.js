@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 const app = new Hono();
 
 /**
- * @api {get} /tokens Token 管理页面
+ * @api {get} /admin/tokens Token 管理页面
  */
 app.get('/tokens', async (c) => {
   return c.html(`<!DOCTYPE html>
@@ -13,9 +13,9 @@ app.get('/tokens', async (c) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Token 管理 - FreeDB</title>
   <style>
-    :root{--primary:#667eea;--bg:#f5f7fa;--border:#e0e0e0;--text:#262626}
+    :root{--primary:#667eea;--bg:#f5f7fa;--border:#e0e0e0}
     *{margin:0;padding:0;box-sizing:border-box}
-    body{display:flex;min-height:100vh}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);display:flex;min-height:100vh}
     .sidebar{width:250px;background:#1a1a2e;color:#fff;position:fixed;height:100vh}
     .sidebar-header{padding:20px;border-bottom:1px solid rgba(255,255,255,0.1)}
     .sidebar-header h2{font-size:1.5em}
@@ -23,13 +23,8 @@ app.get('/tokens', async (c) => {
     .sidebar-nav a{display:flex;align-items:center;gap:10px;padding:12px 20px;color:rgba(255,255,255,0.8);text-decoration:none}
     .sidebar-nav a:hover,.sidebar-nav a.active{background:rgba(255,255,255,0.1);color:#fff}
     .main-content{flex:1;margin-left:250px;padding:30px}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
-    .navbar{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:20px 40px;display:flex;justify-content:space-between;align-items:center}
-    .navbar h1{font-size:1.8em}
-    .navbar h1 span{color:var(--primary)}
-    .navbar a{color:#fff;text-decoration:none;opacity:0.8}
-    .navbar a:hover{opacity:1}
-    .container{max-width:1400px;margin:0 auto;padding:30px}
+    .header{background:#fff;padding:20px 30px;border-radius:12px;margin-bottom:30px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+    .header h1{font-size:1.8em;color:var(--primary)}
     .toolbar{background:#fff;padding:20px;border-radius:12px;margin-bottom:20px;display:flex;gap:15px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
     .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
     .btn-primary{background:var(--primary);color:#fff}
@@ -60,11 +55,7 @@ app.get('/tokens', async (c) => {
     </nav>
   </aside>
   <main class="main-content">
-  <nav class="navbar">
-    <h1>🔑 Free<span>DB</span> Token 管理</h1>
-    <a href="/">← 返回 API 文档</a>
-  </nav>
-  <div class="container">
+    <div class="header"><h1>🔑 Token 管理</h1><a href="/admin/dashboard" style="color:var(--primary);text-decoration:none">← 返回控制台</a></div>
     <div class="toolbar">
       <button class="btn btn-primary" onclick="loadData()">🔄 刷新</button>
       <select id="filter-status" onchange="filterData()"><option value="">全部状态</option><option value="1">启用 (1)</option><option value="0">禁用 (0)</option></select>
@@ -76,106 +67,39 @@ app.get('/tokens', async (c) => {
         <tbody id="table-body"><tr><td colspan="7" class="loading">加载中...</td></tr></tbody>
       </table>
     </div>
-  </div>
-  <script>
-    let allData=[],filteredData=[];
-    async function loadData(){
-      try{
-        const res=await fetch('/admin/api/tokens');
-        const data=await res.json();
-        if(data.success){allData=data.data;filteredData=[...allData];renderTable();}
-        else{document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="empty">加载失败：'+data.error+'</td></tr>';}
-      }catch(e){document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="empty">加载失败：'+e.message+'</td></tr>';}
-    }
-    function filterData(){
-      const status=document.getElementById('filter-status').value;
-      const search=document.getElementById('search').value.toLowerCase();
-      filteredData=allData.filter(d=>{
-        if(status&&d.status!=status)return false;
-        if(search&&!d.user.toLowerCase().includes(search)&&!d.token.toLowerCase().includes(search))return false;
-        return true;
-      });
-      renderTable();
-    }
-    function renderTable(){
-      const tbody=document.getElementById('table-body');
-      if(filteredData.length===0){tbody.innerHTML='<tr><td colspan="7" class="empty">暂无数据</td></tr>';return;}
-      tbody.innerHTML=filteredData.map(d=>\`<tr>
-        <td>\${d.id}</td>
-        <td>\${d.user}</td>
-        <td><span class="token-code">\${d.token.substring(0,20)}...</span> <button class="copy-btn" onclick="copyToken('\${d.token}')">📋 复制</button></td>
-        <td><span class="status status-\${d.status}">\${d.status===1?'启用':'禁用'}</span></td>
-        <td>\${d.create_user||'-'}</td>
-        <td>\${new Date(d.create_time).toLocaleString()}</td>
-        <td><button class="btn btn-secondary" onclick="toggleStatus(\${d.id},\${d.status})" style="padding:6px 12px;font-size:12px;">\${d.status===1?'禁用':'启用'}</button></td>
-      </tr>\`).join('');
-    }
-    function copyToken(token){navigator.clipboard.writeText(token);alert('Token 已复制到剪贴板');}
-    async function toggleStatus(id,status){
-      if(!confirm(\`确定要\${status===1?'禁用':'启用'}这个 Token 吗？\`))return;
-      try{
-        const res=await fetch('/admin/api/tokens/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status===1?0:1})});
-        const result=await res.json();
-        if(result.success){alert('操作成功');loadData();}else{alert('操作失败：'+result.error);}
-      }catch(e){alert('请求失败：'+e.message);}
-    }
-    loadData();
-  </script>
-</main></body>
+  </main>
+  <script src="/assets/js/tokens.js"></script>
+</body>
 </html>`);
 });
 
 /**
- * @api {get} /api/tokens 获取 Token 列表
+ * @api {get} /api/admin/tokens 获取 Token 列表
  */
-app.get('/api/tokens', async (c) => {
+app.get('/api/admin/tokens', async (c) => {
   try {
     const db = c.env.DB;
-    const result = await db.prepare(`
-      SELECT * FROM tokens 
-      ORDER BY create_time DESC
-    `).all();
-    
-    return c.json({
-      success: true,
-      data: result.results || []
-    });
+    const result = await db.prepare('SELECT * FROM tokens ORDER BY create_time DESC').all();
+    return c.json({ success: true, data: result.results || [] });
   } catch (error) {
-    return c.json({
-      success: false,
-      error: error.message
-    }, 500);
+    return c.json({ success: false, error: error.message }, 500);
   }
 });
 
 /**
- * @api {put} /api/tokens/:id 更新 Token 状态
+ * @api {put} /api/admin/tokens/:id 更新 Token 状态
  */
-app.put('/api/tokens/:id', async (c) => {
+app.put('/api/admin/tokens/:id', async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
-    const body = await c.req.json();
-    const { status } = body;
-    
+    const { status } = await c.req.json();
     const db = c.env.DB;
     const now = new Date().toISOString();
-    
-    await db.prepare(`
-      UPDATE tokens SET status = ?, update_time = ?, update_user = ?
-      WHERE id = ?
-    `).bind(status, now, 'admin', id).run();
-    
-    const updated = await db.prepare('SELECT * FROM tokens WHERE id = ?').bind(id).first();
-    
-    return c.json({
-      success: true,
-      data: updated
-    });
+    await db.prepare('UPDATE tokens SET status = ?, update_time = ?, update_user = ? WHERE id = ?')
+      .bind(status, now, 'admin', id).run();
+    return c.json({ success: true });
   } catch (error) {
-    return c.json({
-      success: false,
-      error: error.message
-    }, 500);
+    return c.json({ success: false, error: error.message }, 500);
   }
 });
 

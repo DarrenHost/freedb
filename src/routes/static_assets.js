@@ -302,4 +302,97 @@ if (typeof loadStats === 'function') loadStats();
   });
 });
 
+
+// Visits JS
+app.get('/js/visits.js', (c) => {
+  const visitsCode = `
+let allData=[],filteredData=[],page=1,pageSize=50;
+
+async function loadData() {
+  try {
+    const res = await fetch('/api/admin/visits');
+    const data = await res.json();
+    if (data.success) {
+      allData = data.data;
+      filteredData = [...allData];
+      renderTable();
+      calcStats();
+    } else {
+      document.getElementById('table-body').innerHTML = '<tr><td colspan="7" class="empty">加载失败</td></tr>';
+    }
+  } catch (e) {
+    document.getElementById('table-body').innerHTML = '<tr><td colspan="7" class="empty">加载失败</td></tr>';
+  }
+}
+
+function calcStats() {
+  const total = allData.length;
+  const today = allData.filter(d => new Date(d.visit_time).toDateString() === new Date().toDateString()).length;
+  const avg = total > 0 ? Math.round(allData.reduce((s,d) => s + (d.response_time_ms||0), 0) / total) : 0;
+  const error = total > 0 ? ((allData.filter(d => d.status_code >= 400).length / total) * 100).toFixed(1) : 0;
+  const el1 = document.getElementById('stat-total');
+  const el2 = document.getElementById('stat-today');
+  const el3 = document.getElementById('stat-avg');
+  const el4 = document.getElementById('stat-error');
+  if (el1) el1.textContent = total;
+  if (el2) el2.textContent = today;
+  if (el3) el3.textContent = avg + 'ms';
+  if (el4) el4.textContent = error + '%';
+}
+
+function filterData() {
+  const method = document.getElementById('filter-method').value;
+  const status = document.getElementById('filter-status').value;
+  const search = document.getElementById('search').value.toLowerCase();
+  const time = document.getElementById('filter-time').value;
+  filteredData = allData.filter(d => {
+    if (method && d.method !== method) return false;
+    if (status) {
+      const s = d.status_code;
+      const cat = status.replace('x','');
+      if (s < cat*100 || s >= (cat+1)*100) return false;
+    }
+    if (search && !d.request_path.toLowerCase().includes(search) && !d.remote_ip?.includes(search)) return false;
+    if (time && new Date(d.visit_time) < new Date(time)) return false;
+    return true;
+  });
+  page = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  const start = (page-1)*pageSize, end = start+pageSize;
+  const data = filteredData.slice(start, end);
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">暂无数据</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(d => \`<tr>
+    <td>\${new Date(d.visit_time).toLocaleString()}</td>
+    <td><span class="method method-\${d.method.toLowerCase()}">\${d.method}</span></td>
+    <td class="truncate">\${d.request_path}\${d.query_string?'?'+d.query_string.substring(0,50):''}</td>
+    <td><span class="status status-\${Math.floor(d.status_code/100)}xx">\${d.status_code}</span></td>
+    <td>\${d.response_time_ms||0}ms</td>
+    <td>\${d.remote_ip||'-'}</td>
+    <td class="truncate">\${d.user_agent||'-'}</td>
+  </tr>\`).join('');
+  renderPagination();
+}
+
+function renderPagination() {
+  const total = Math.ceil(filteredData.length / pageSize);
+  const div = document.getElementById('pagination');
+  if (!div || total <= 1) { if (div) div.innerHTML = ''; return; }
+  div.innerHTML = Array.from({length:total},(_,i) => \`<button class="page-btn \${i+1===page?'active':''}" onclick="page=\${i+1};renderTable()">\${i+1}</button>\`).join('');
+}
+
+loadData();
+  `.trim();
+  return c.body(visitsCode, 200, {
+    'Content-Type': 'application/javascript',
+    'Cache-Control': 'public, max-age=31536000'
+  });
+});
+
 export default app;
