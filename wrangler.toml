@@ -1,0 +1,23 @@
+name = "freedb"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+node_compat = true
+
+# D1 数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "freedb"
+database_id = "YOUR_DATABASE_ID"
+
+# 本地开发配置
+[vars]
+ENVIRONMENT = "development"
+
+# 生产环境配置
+[env.production]
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "freedb"
+database_id = "YOUR_PRODUCTION_DATABASE_ID"
+[env.production.vars]
+ENVIRONMENT = "production"
