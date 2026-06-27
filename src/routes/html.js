@@ -42,8 +42,10 @@ app.get('/', async (c) => {
   <nav class="navbar">
     <h1>⚡ Free<span>DB</span></h1>
     <div class="navbar-links">
-      <a href="/demo/app-versions">📦 Demo</a>
-      <a href="/demo/json-data">📄 JSON Demo</a>
+      <a href="/demo/app-versions">📦 应用版本</a>
+      <a href="/demo/json-data">📄 JSON 数据</a>
+      <a href="/admin/visits">📊 访问统计</a>
+      <a href="/admin/tokens">🔑 Token 管理</a>
       <a href="/health">💚 Health</a>
       <a href="https://github.com/DarrenHost/freedb" target="_blank">GitHub</a>
     </div>

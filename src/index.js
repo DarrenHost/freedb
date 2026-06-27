@@ -10,6 +10,7 @@ import jsonDataRouter from './routes/json_data.js';
 import demoRouter from './routes/demo.js';
 import demoJsonDataRouter from './routes/demo_json_data.js';
 import adminVisitsRouter from './routes/admin_visits.js';
+import adminTokensRouter from './routes/admin_tokens.js';
 import { createVisitMiddleware } from './middleware/visit_logger.js';
 
 const app = new Hono();
@@ -19,11 +20,11 @@ app.use('*', logger());
 app.use('*', cors());
 app.use('*', prettyJSON());
 
-// API 访问记录中间件（仅记录 /api/ 路径，排除 /api/admin/visits）
+// API 访问记录中间件（仅记录 /api/ 路径，排除管理后台 API）
 const visitMiddleware = createVisitMiddleware();
 app.use('/api/*', async (c, next) => {
   // 不记录管理后台的 API
-  if (c.req.path === '/api/admin/visits') {
+  if (c.req.path.startsWith('/api/admin/')) {
     return await next();
   }
   await visitMiddleware(c, next);
@@ -38,6 +39,7 @@ app.route('/demo', demoJsonDataRouter);
 
 // 管理后台（不记录访问）
 app.route('/admin', adminVisitsRouter);
+app.route('/admin', adminTokensRouter);
 
 // API 路由（记录访问）
 app.route('/api/users', usersRouter);
