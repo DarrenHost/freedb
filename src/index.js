@@ -3,8 +3,10 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
 
+import htmlRouter from './routes/html.js';
 import usersRouter from './routes/users.js';
-import { DB } from './db/index.js';
+import appVersionsRouter from './routes/app_versions.js';
+import demoRouter from './routes/demo.js';
 
 const app = new Hono();
 
@@ -13,17 +15,15 @@ app.use('*', logger());
 app.use('*', cors());
 app.use('*', prettyJSON());
 
-// 健康检查
-app.get('/health', (c) => {
-  return c.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: ENVIRONMENT
-  });
-});
+// HTML 路由
+app.route('/', htmlRouter);
+
+// Demo 页面路由
+app.route('/demo', demoRouter);
 
 // API 路由
 app.route('/api/users', usersRouter);
+app.route('/api/app-versions', appVersionsRouter);
 
 // 404 处理
 app.notFound((c) => {
