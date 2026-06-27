@@ -118,6 +118,29 @@ app.get('/tokens', async (c) => {
 });
 
 /**
+ * @api {post} /api/admin/tokens 创建 Token
+ */
+app.post('/tokens', async (c) => {
+  try {
+    const { user_id, user, token } = await c.req.json();
+    const db = c.env.DB;
+    const now = new Date().toISOString();
+    
+    // 生成随机 Token（如果未提供）
+    const tokenValue = token || crypto.randomUUID().replace(/-/g, '');
+    
+    await db.prepare('INSERT INTO tokens (user_id, user, token, status, create_time, update_time) VALUES (?, ?, ?, 1, ?, ?)')
+      .bind(user_id || null, user, tokenValue, now, now).run();
+    
+    const result = await db.prepare('SELECT * FROM tokens WHERE token = ?').bind(tokenValue).first();
+    
+    return c.json({ success: true, data: result });
+  } catch (error) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+/**
  * @api {put} /api/admin/tokens/:id 更新 Token 状态
  */
 app.put('/tokens/:id', async (c) => {

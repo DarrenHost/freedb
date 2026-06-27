@@ -29,6 +29,8 @@ app.get('/users', async (c) => {
     .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
     .btn-primary{background:var(--primary);color:#fff}
     .btn-secondary{background:#f0f0f0;color:#333}
+    .btn-success{background:#2ecc71;color:#fff}
+    .btn-warning{background:#ff9800;color:#fff}
     input,select{padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px}
     .table-container{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
     table{width:100%;border-collapse:collapse;font-size:13px}
@@ -47,6 +49,8 @@ app.get('/users', async (c) => {
     .form-group input,.form-group select{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px}
     .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:30px}
     .loading,.empty{text-align:center;padding:60px 20px;color:#8c8c8c}
+    .action-btns{display:flex;gap:5px}
+    .action-btn{padding:4px 8px;font-size:11px;border:none;border-radius:4px;cursor:pointer}
   </style>
 </head>
 <body>
@@ -92,79 +96,18 @@ app.get('/users', async (c) => {
     </div>
   </div>
   <script src="/assets/js/md5.js"></script>
-<script>
-    let allData=[],filteredData=[];
-    async function loadData(){
-      try{
-        const res=await fetch('/api/admin/users');
-        const data=await res.json();
-        if(data.success){allData=data.data;filteredData=[...allData];renderTable();}
-        else{document.getElementById('table-body').innerHTML='<tr><td colspan="6" class="empty">加载失败</td></tr>';}
-      }catch(e){document.getElementById('table-body').innerHTML='<tr><td colspan="6" class="empty">加载失败</td></tr>';}
-    }
-    function filterData(){
-      const status=document.getElementById('filter-status').value;
-      const search=document.getElementById('search').value.toLowerCase();
-      filteredData=allData.filter(d=>{
-        if(status&&d.status!==status)return false;
-        if(search&&!d.name.toLowerCase().includes(search)&&!d.email.toLowerCase().includes(search))return false;
-        return true;
-      });
-      renderTable();
-    }
-    function renderTable(){
-      const tbody=document.getElementById('table-body');
-      if(filteredData.length===0){tbody.innerHTML='<tr><td colspan="6" class="empty">暂无数据</td></tr>';return;}
-      tbody.innerHTML=filteredData.map(d=>\`<tr>
-        <td>\${d.id}</td><td>\${d.name}</td><td>\${d.email}</td>
-        <td><span class="status status-\${d.status}">\${d.status==='active'?'活跃':'非活跃'}</span></td>
-        <td>\${new Date(d.created_at).toLocaleString()}</td>
-        <td>
-          <button class="btn btn-secondary" onclick="editUser(\${d.id})" style="padding:6px 12px;font-size:12px;">编辑</button>
-          <button class="btn btn-secondary" onclick="resetPwd(\${d.id})" style="padding:6px 12px;font-size:12px;margin-left:8px;">重置密码</button>
-        </td>
-      </tr>\`).join('');
-    }
-    function openModal(){
-      document.getElementById('modal-title').textContent='新建用户';
-      document.getElementById('user-form').reset();
-      document.getElementById('edit-id').value='';
-      document.getElementById('modal-overlay').classList.add('active');
-    }
-    function closeModal(){document.getElementById('modal-overlay').classList.remove('active');}
-    async function editUser(id){
-      const user=allData.find(u=>u.id===id);if(!user)return;
-      document.getElementById('modal-title').textContent='编辑用户';
-      document.getElementById('edit-id').value=user.id;
-      document.getElementById('name').value=user.name;
-      document.getElementById('email').value=user.email;
-      document.getElementById('pwd').value='';
-      document.getElementById('status').value=user.status;
-      document.getElementById('modal-overlay').classList.add('active');
-    }
-    async function handleSubmit(e){
-      e.preventDefault();
-      const id=document.getElementById('edit-id').value;
-      const data={name:document.getElementById('name').value,email:document.getElementById('email').value,status:document.getElementById('status').value};
-      const pwd=document.getElementById('pwd').value;
-      if(pwd)data.pwd=md5(pwd);
-      try{
-        const url=id?'/api/admin/users/'+id:'/api/admin/users';
-        const method=id?'PUT':'POST';
-        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-        const result=await res.json();
-        if(result.success){alert(id?'更新成功':'创建成功');closeModal();loadData();}else{alert('操作失败：'+result.error);}
-      }catch(e){alert('请求失败：'+e.message);}
-    }
-    async function resetPwd(id){
-      const newPwd=prompt('请输入新密码:');if(!newPwd)return;
-      try{
-        const res=await fetch('/api/admin/users/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({pwd:md5(newPwd)})});
-        const result=await res.json();
-        if(result.success){alert('密码重置成功');}else{alert('操作失败：'+result.error);}
-      }catch(e){alert('请求失败：'+e.message);}
-    }
-    loadData();
+  <script>
+let allData=[],filteredData=[];
+async function loadData(){try{const res=await fetch('/api/admin/users');const data=await res.json();if(data.success){allData=data.data;filteredData=[...allData];renderTable();}else{document.getElementById('table-body').innerHTML='<tr><td colspan="6" class="empty">加载失败</td></tr>';} }catch(e){document.getElementById('table-body').innerHTML='<tr><td colspan="6" class="empty">加载失败</td></tr>';} }
+function filterData(){const status=document.getElementById('filter-status').value;const search=document.getElementById('search').value.toLowerCase();filteredData=allData.filter(d=>{if(status&&d.status!==status)return false;if(search&&!d.name.toLowerCase().includes(search)&&!d.email.toLowerCase().includes(search))return false;return true;});renderTable();}
+function renderTable(){const tbody=document.getElementById('table-body');if(filteredData.length===0){tbody.innerHTML='<tr><td colspan="6" class="empty">暂无数据</td></tr>';return;}tbody.innerHTML=filteredData.map(d=>\`<tr><td>\${d.id}</td><td>\${d.name}</td><td>\${d.email}</td><td><span class="status status-\${d.status}">\${d.status==='active'?'活跃':'非活跃'}</span></td><td>\${new Date(d.created_at).toLocaleString()}</td><td class="action-btns"><button class="btn btn-secondary" onclick="editUser(\${d.id})" style="padding:4px 8px;font-size:11px;">编辑</button><button class="\${d.status==='active'?'btn-warning':'btn-success'}" onclick="toggleStatus(\${d.id},'\${d.status}')" style="padding:4px 8px;font-size:11px;">\${d.status==='active'?'禁用':'启用'}</button><button class="btn btn-primary" onclick="generateToken(\${d.id},'\${d.name}')" style="padding:4px 8px;font-size:11px;">生成 Token</button></td></tr>\`).join('');}
+function openModal(){document.getElementById('modal-title').textContent='新建用户';document.getElementById('user-form').reset();document.getElementById('edit-id').value='';document.getElementById('modal-overlay').classList.add('active');}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('active');}
+async function editUser(id){const user=allData.find(u=>u.id===id);if(!user)return;document.getElementById('modal-title').textContent='编辑用户';document.getElementById('edit-id').value=user.id;document.getElementById('name').value=user.name;document.getElementById('email').value=user.email;document.getElementById('pwd').value='';document.getElementById('status').value=user.status;document.getElementById('modal-overlay').classList.add('active');}
+async function handleSubmit(e){e.preventDefault();const id=document.getElementById('edit-id').value;const data={name:document.getElementById('name').value,email:document.getElementById('email').value,status:document.getElementById('status').value};const pwd=document.getElementById('pwd').value;if(pwd)data.pwd=md5(pwd);try{const url=id?'/api/admin/users/'+id:'/api/admin/users';const method=id?'PUT':'POST';const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await res.json();if(result.success){alert(id?'更新成功':'创建成功');closeModal();loadData();}else{alert('操作失败：'+result.error);} }catch(e){alert('请求失败：'+e.message);} }
+async function toggleStatus(id,status){if(!confirm(\`确定要\${status==='active'?'禁用':'启用'}这个用户吗？\`))return;try{const res=await fetch('/api/admin/users/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status==='active'?'inactive':'active'})});const result=await res.json();if(result.success){alert('操作成功');loadData();}else{alert('操作失败：'+result.error);} }catch(e){alert('请求失败：'+e.message);} }
+async function generateToken(userId,userName){const tokenName=prompt('请输入 Token 名称（可选）:',userName+'_token');if(!tokenName)return;try{const res=await fetch('/api/admin/tokens',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:userId,user:userName,token:tokenName})});const result=await res.json();if(result.success){alert('Token 生成成功：'+result.data.token);if(confirm('是否前往 Token 管理页面？'))location.href='/admin/tokens';}else{alert('操作失败：'+result.error);} }catch(e){alert('请求失败：'+e.message);} }
+loadData();
   </script>
 </body>
 </html>`);

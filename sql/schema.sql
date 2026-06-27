@@ -95,19 +95,22 @@ CREATE INDEX IF NOT EXISTS idx_visit_log_path ON visit_log(request_path);
 CREATE INDEX IF NOT EXISTS idx_visit_log_status ON visit_log(status_code);
 
 -- ============================================
--- Token 管理表
+-- Token 管理表（新增 user_id 字段）
 -- ============================================
 CREATE TABLE IF NOT EXISTS tokens (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
   user TEXT NOT NULL,
   token TEXT NOT NULL UNIQUE,
   status INTEGER DEFAULT 1,
   create_user TEXT,
   create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
   update_user TEXT,
-  update_time DATETIME DEFAULT CURRENT_TIMESTAMP
+  update_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_tokens_user_id ON tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_tokens_user ON tokens(user);
 CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);
 CREATE INDEX IF NOT EXISTS idx_tokens_status ON tokens(status);
@@ -137,7 +140,7 @@ INSERT OR IGNORE INTO json_data (name, code, parent_name, parent_code, content, 
   ('测试数据', 'test-data', NULL, NULL, '{"test": true, "value": 123}', 0, 'test');
 
 -- Token 示例数据
-INSERT OR IGNORE INTO tokens (user, token, status, create_user) VALUES 
-  ('admin', 'admin_token_abc123xyz', 1, 'system'),
-  ('api_user', 'api_key_def456uvw', 1, 'admin'),
-  ('test_user', 'test_token_ghi789rst', 0, 'admin');
+INSERT OR IGNORE INTO tokens (user_id, user, token, status, create_user) VALUES 
+  (1, 'admin', 'admin_token_abc123xyz', 1, 'system'),
+  (1, 'admin', 'api_key_def456uvw', 1, 'admin'),
+  (2, 'Alice', 'test_token_ghi789rst', 0, 'admin');
