@@ -21,17 +21,17 @@ CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 -- ============================================
 CREATE TABLE IF NOT EXISTS app_versions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL COMMENT '应用名称',
-  code TEXT NOT NULL COMMENT '应用编码',
-  parent_code TEXT COMMENT '父级编码',
-  package TEXT NOT NULL COMMENT '包名',
-  version TEXT NOT NULL COMMENT '版本号',
-  url TEXT COMMENT '下载/访问 URL',
-  status TEXT DEFAULT 'active' COMMENT '状态：active/inactive',
-  create_user TEXT COMMENT '创建人',
-  create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  update_user TEXT COMMENT '更新人',
-  update_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间'
+  name TEXT NOT NULL,
+  code TEXT NOT NULL,
+  parent_code TEXT,
+  package TEXT NOT NULL,
+  version TEXT NOT NULL,
+  url TEXT,
+  status TEXT DEFAULT 'active',
+  create_user TEXT,
+  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_user TEXT,
+  update_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 创建索引
