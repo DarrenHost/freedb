@@ -19,9 +19,15 @@ app.use('*', logger());
 app.use('*', cors());
 app.use('*', prettyJSON());
 
-// API 访问记录中间件（仅记录 /api/ 路径）
+// API 访问记录中间件（仅记录 /api/ 路径，排除 /admin/api/）
 const visitMiddleware = createVisitMiddleware();
-app.use('/api/*', visitMiddleware);
+app.use('/api/*', async (c, next) => {
+  // 不记录管理后台的 API
+  if (c.req.path.startsWith('/admin/api/')) {
+    return await next();
+  }
+  await visitMiddleware(c, next);
+});
 
 // HTML 路由（不记录访问）
 app.route('/', htmlRouter);
