@@ -45,7 +45,9 @@ CREATE INDEX IF NOT EXISTS idx_app_versions_status ON app_versions(status);
 CREATE TABLE IF NOT EXISTS json_data (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
+  code TEXT,
   parent_name TEXT,
+  parent_code TEXT,
   content TEXT,
   status INTEGER DEFAULT 1,
   create_user TEXT,
@@ -56,7 +58,9 @@ CREATE TABLE IF NOT EXISTS json_data (
 );
 
 CREATE INDEX IF NOT EXISTS idx_json_data_name ON json_data(name);
+CREATE INDEX IF NOT EXISTS idx_json_data_code ON json_data(code);
 CREATE INDEX IF NOT EXISTS idx_json_data_parent_name ON json_data(parent_name);
+CREATE INDEX IF NOT EXISTS idx_json_data_parent_code ON json_data(parent_code);
 CREATE INDEX IF NOT EXISTS idx_json_data_status ON json_data(status);
 
 -- ============================================
@@ -77,8 +81,8 @@ INSERT OR IGNORE INTO app_versions (name, code, parent_code, package, version, u
   ('测试应用', 'test-app', NULL, 'com.test.app', '0.1.0', 'https://test.freedb.com', 'inactive', 'test');
 
 -- JSON 数据示例
-INSERT OR IGNORE INTO json_data (name, parent_name, content, status, create_user) VALUES 
-  ('首页配置', NULL, '{"title": "FreeDB", "subtitle": "轻量级数据库解决方案", "theme": "dark"}', 1, 'admin'),
-  ('用户设置', NULL, '{"language": "zh-CN", "timezone": "UTC+8", "notifications": true}', 1, 'admin'),
-  ('导航菜单', '首页配置', '{"items": [{"name": "首页", "path": "/"}, {"name": "关于", "path": "/about"}]}', 1, 'admin'),
-  ('测试数据', NULL, '{"test": true, "value": 123}', 0, 'test');
+INSERT OR IGNORE INTO json_data (name, code, parent_name, parent_code, content, status, create_user) VALUES 
+  ('首页配置', 'home-config', NULL, NULL, '{"title": "FreeDB", "subtitle": "轻量级数据库解决方案", "theme": "dark"}', 1, 'admin'),
+  ('用户设置', 'user-settings', NULL, NULL, '{"language": "zh-CN", "timezone": "UTC+8", "notifications": true}', 1, 'admin'),
+  ('导航菜单', 'nav-menu', '首页配置', 'home-config', '{"items": [{"name": "首页", "path": "/"}, {"name": "关于", "path": "/about"}]}', 1, 'admin'),
+  ('测试数据', 'test-data', NULL, NULL, '{"test": true, "value": 123}', 0, 'test');

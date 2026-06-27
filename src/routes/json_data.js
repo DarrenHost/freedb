@@ -15,6 +15,7 @@ app.get('/', async (c) => {
     // 支持筛选
     const status = c.req.query('status');
     const parent_name = c.req.query('parent_name');
+    const parent_code = c.req.query('parent_code');
     
     if (status !== undefined) {
       conditions.push('status = ?');
@@ -26,6 +27,14 @@ app.get('/', async (c) => {
       } else {
         conditions.push('parent_name = ?');
         params.push(parent_name);
+      }
+    }
+    if (parent_code) {
+      if (parent_code === 'null') {
+        conditions.push('parent_code IS NULL');
+      } else {
+        conditions.push('parent_code = ?');
+        params.push(parent_code);
       }
     }
     
@@ -89,7 +98,7 @@ app.get('/:id', async (c) => {
 app.post('/', async (c) => {
   try {
     const body = await c.req.json();
-    const { name, parent_name, content, status, create_user } = body;
+    const { name, code, parent_name, parent_code, content, status, create_user } = body;
     
     // 验证必填字段
     if (!name) {
@@ -103,11 +112,13 @@ app.post('/', async (c) => {
     const now = new Date().toISOString();
     const result = await db.prepare(`
       INSERT INTO json_data 
-      (name, parent_name, content, status, create_user, create_time, update_time) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      (name, code, parent_name, parent_code, content, status, create_user, create_time, update_time) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       name,
+      code || null,
       parent_name || null,
+      parent_code || null,
       content || null,
       status !== undefined ? status : 1,
       create_user || 'system',
@@ -153,12 +164,14 @@ app.put('/:id', async (c) => {
     
     await db.prepare(`
       UPDATE json_data SET 
-        name = ?, parent_name = ?, content = ?, 
+        name = ?, code = ?, parent_name = ?, parent_code = ?, content = ?, 
         status = ?, update_user = ?, update_time = ?
       WHERE id = ?
     `).bind(
       body.name || existing.name,
+      body.code !== undefined ? body.code : existing.code,
       body.parent_name !== undefined ? body.parent_name : existing.parent_name,
+      body.parent_code !== undefined ? body.parent_code : existing.parent_code,
       body.content !== undefined ? body.content : existing.content,
       body.status !== undefined ? body.status : existing.status,
       body.update_user || existing.update_user,
