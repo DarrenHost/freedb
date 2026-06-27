@@ -283,9 +283,14 @@ app.get('/app-versions', async (c) => {
         if (data.success) {
           allData = data.data;
           renderTable(allData);
+        } else {
+          document.getElementById('table-body').innerHTML = 
+            '<tr><td colspan="9" class="empty">加载失败：' + data.error + '</td></tr>';
         }
       } catch (error) {
         console.error('加载失败:', error);
+        document.getElementById('table-body').innerHTML = 
+          '<tr><td colspan="9" class="empty">加载失败：' + error.message + '</td></tr>';
       }
     }
     

@@ -108,8 +108,8 @@ export class QueryBuilder {
  * 数据库操作类
  */
 export class Database {
-  constructor(env) {
-    this.db = env.DB;
+  constructor(db) {
+    this.db = db;
   }
 
   /**
@@ -216,7 +216,7 @@ export class Database {
 /**
  * 更新构建器
  */
-class UpdateBuilder {
+export class UpdateBuilder {
   constructor(db, tableName, data) {
     this.db = db;
     this.tableName = tableName;
@@ -249,14 +249,14 @@ class UpdateBuilder {
       sql += ` WHERE ${this.conditions.join(' AND ')}`;
     }
     
-    return await this.db.db.prepare(sql).bind(...values).run();
+    return await this.db.prepare(sql).bind(...values).run();
   }
 }
 
 /**
  * 删除构建器
  */
-class DeleteBuilder {
+export class DeleteBuilder {
   constructor(db, tableName) {
     this.db = db;
     this.tableName = tableName;
@@ -279,38 +279,36 @@ class DeleteBuilder {
       sql += ` WHERE ${this.conditions.join(' AND ')}`;
     }
     
-    return await this.db.db.prepare(sql).bind(...params).run();
+    return await this.db.prepare(sql).bind(...this.params).run();
   }
 }
-
-// 导出单例
-export const DB = {
-  query: (tableName) => {
-    if (!globalThis.__DB__) {
-      throw new Error('Database not initialized. Make sure DB binding is configured in wrangler.toml');
-    }
-    return new Database(globalThis.__DB__).query(tableName);
-  },
-  
-  insert: (tableName, data) => {
-    if (!globalThis.__DB__) {
-      throw new Error('Database not initialized');
-    }
-    return new Database(globalThis.__DB__).insert(tableName, data);
-  },
-  
-  raw: (sql, params = []) => {
-    if (!globalThis.__DB__) {
-      throw new Error('Database not initialized');
-    }
-    return new Database(globalThis.__DB__).raw(sql, params);
-  }
-};
 
 /**
- * 初始化数据库中间件
+ * 创建数据库实例
  * @param {Object} env - Cloudflare 环境对象
+ * @returns {Database}
  */
-export function initDB(env) {
-  globalThis.__DB__ = env.DB;
+export function createDB(env) {
+  if (!env || !env.DB) {
+    throw new Error('Database not initialized. Make sure DB binding is configured in wrangler.toml');
+  }
+  return new Database(env.DB);
 }
+
+// 导出 DB 辅助函数（需要在路由中使用 env 参数）
+export const DB = {
+  query: (env, tableName) => {
+    const db = createDB(env);
+    return db.query(tableName);
+  },
+  
+  insert: (env, tableName, data) => {
+    const db = createDB(env);
+    return db.insert(tableName, data);
+  },
+  
+  raw: (env, sql, params = []) => {
+    const db = createDB(env);
+    return db.raw(sql, params);
+  }
+};

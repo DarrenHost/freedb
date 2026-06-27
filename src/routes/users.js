@@ -1,18 +1,19 @@
 import { Hono } from 'hono';
-import { DB } from '../db/index.js';
 
 const app = new Hono();
 
 /**
- * @api {get} /users 获取用户列表
+ * @api {get} /api/users 获取用户列表
  */
 app.get('/', async (c) => {
   try {
-    const users = await DB.query('users').all();
+    const db = c.env.DB;
+    const result = await db.prepare('SELECT * FROM users ORDER BY created_at DESC').all();
+    
     return c.json({
       success: true,
-      data: users,
-      count: users.length
+      data: result.results || [],
+      count: result.results?.length || 0
     });
   } catch (error) {
     return c.json({
@@ -23,14 +24,15 @@ app.get('/', async (c) => {
 });
 
 /**
- * @api {get} /users/:id 获取单个用户
+ * @api {get} /api/users/:id 获取单个用户
  */
 app.get('/:id', async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
-    const user = await DB.query('users').where({ id }).first();
+    const db = c.env.DB;
+    const result = await db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
     
-    if (!user) {
+    if (!result) {
       return c.json({
         success: false,
         error: 'User not found'
@@ -39,7 +41,7 @@ app.get('/:id', async (c) => {
     
     return c.json({
       success: true,
-      data: user
+      data: result
     });
   } catch (error) {
     return c.json({
@@ -50,7 +52,7 @@ app.get('/:id', async (c) => {
 });
 
 /**
- * @api {post} /users 创建用户
+ * @api {post} /api/users 创建用户
  */
 app.post('/', async (c) => {
   try {
@@ -64,12 +66,13 @@ app.post('/', async (c) => {
       }, 400);
     }
     
-    const user = await DB.insert('users', {
-      name,
-      email,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
+    const db = c.env.DB;
+    const now = new Date().toISOString();
+    const result = await db.prepare(
+      'INSERT INTO users (name, email, created_at, updated_at) VALUES (?, ?, ?, ?)'
+    ).bind(name, email, now, now).run();
+    
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').bind(result.meta?.last_row_id).first();
     
     return c.json({
       success: true,
@@ -84,15 +87,16 @@ app.post('/', async (c) => {
 });
 
 /**
- * @api {put} /users/:id 更新用户
+ * @api {put} /api/users/:id 更新用户
  */
 app.put('/:id', async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
     const body = await c.req.json();
     
-    // 检查用户是否存在
-    const existing = await DB.query('users').where({ id }).first();
+    const db = c.env.DB;
+    const existing = await db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
+    
     if (!existing) {
       return c.json({
         success: false,
@@ -100,17 +104,20 @@ app.put('/:id', async (c) => {
       }, 404);
     }
     
-    // 更新
-    await new (await import('../db/index.js')).UpdateBuilder(
-      new (await import('../db/index.js')).Database(c.env),
-      'users',
-      {
-        ...body,
-        updated_at: new Date().toISOString()
-      }
-    ).where({ id }).execute();
+    const { name, email, status } = body;
+    const now = new Date().toISOString();
     
-    const updated = await DB.query('users').where({ id }).first();
+    await db.prepare(
+      'UPDATE users SET name = ?, email = ?, status = ?, updated_at = ? WHERE id = ?'
+    ).bind(
+      name || existing.name,
+      email || existing.email,
+      status || existing.status,
+      now,
+      id
+    ).run();
+    
+    const updated = await db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
     
     return c.json({
       success: true,
@@ -125,14 +132,14 @@ app.put('/:id', async (c) => {
 });
 
 /**
- * @api {delete} /users/:id 删除用户
+ * @api {delete} /api/users/:id 删除用户
  */
 app.delete('/:id', async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
+    const db = c.env.DB;
     
-    // 检查用户是否存在
-    const existing = await DB.query('users').where({ id }).first();
+    const existing = await db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first();
     if (!existing) {
       return c.json({
         success: false,
@@ -140,10 +147,7 @@ app.delete('/:id', async (c) => {
       }, 404);
     }
     
-    await new (await import('../db/index.js')).DeleteBuilder(
-      new (await import('../db/index.js')).Database(c.env),
-      'users'
-    ).where({ id }).execute();
+    await db.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
     
     return c.json({
       success: true,

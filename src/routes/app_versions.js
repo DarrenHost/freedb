@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { DB } from '../db/index.js';
 
 const app = new Hono();
 
@@ -8,23 +7,46 @@ const app = new Hono();
  */
 app.get('/', async (c) => {
   try {
-    const query = DB.query('app_versions');
+    const db = c.env.DB;
+    let sql = 'SELECT * FROM app_versions';
+    const conditions = [];
+    const params = [];
     
     // 支持筛选
     const status = c.req.query('status');
     const code = c.req.query('code');
     const package_name = c.req.query('package');
     
-    if (status) query.where({ status });
-    if (code) query.where({ code });
-    if (package_name) query.where({ package: package_name });
+    if (status) {
+      conditions.push('status = ?');
+      params.push(status);
+    }
+    if (code) {
+      conditions.push('code = ?');
+      params.push(code);
+    }
+    if (package_name) {
+      conditions.push('package = ?');
+      params.push(package_name);
+    }
     
-    const versions = await query.orderBy('create_time', 'DESC').all();
+    if (conditions.length > 0) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    sql += ' ORDER BY create_time DESC';
+    
+    let query = db.prepare(sql);
+    if (params.length > 0) {
+      query = query.bind(...params);
+    }
+    
+    const result = await query.all();
     
     return c.json({
       success: true,
-      data: versions,
-      count: versions.length
+      data: result.results || [],
+      count: result.results?.length || 0
     });
   } catch (error) {
     return c.json({
@@ -40,9 +62,10 @@ app.get('/', async (c) => {
 app.get('/:id', async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
-    const version = await DB.query('app_versions').where({ id }).first();
+    const db = c.env.DB;
+    const result = await db.prepare('SELECT * FROM app_versions WHERE id = ?').bind(id).first();
     
-    if (!version) {
+    if (!result) {
       return c.json({
         success: false,
         error: 'App version not found'
@@ -51,7 +74,7 @@ app.get('/:id', async (c) => {
     
     return c.json({
       success: true,
-      data: version
+      data: result
     });
   } catch (error) {
     return c.json({
@@ -77,19 +100,28 @@ app.post('/', async (c) => {
       }, 400);
     }
     
+    const db = c.env.DB;
     const now = new Date().toISOString();
-    const appVersion = await DB.insert('app_versions', {
+    const result = await db.prepare(`
+      INSERT INTO app_versions 
+      (name, code, parent_code, package, version, url, status, create_user, create_time, update_time) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
       name,
       code,
-      parent_code: parent_code || null,
-      package: pkg,
+      parent_code || null,
+      pkg,
       version,
-      url: url || null,
-      status: status || 'active',
-      create_user: create_user || 'system',
-      create_time: now,
-      update_time: now
-    });
+      url || null,
+      status || 'active',
+      create_user || 'system',
+      now,
+      now
+    ).run();
+    
+    const appVersion = await db.prepare('SELECT * FROM app_versions WHERE id = ?')
+      .bind(result.meta?.last_row_id)
+      .first();
     
     return c.json({
       success: true,
@@ -111,8 +143,9 @@ app.put('/:id', async (c) => {
     const id = parseInt(c.req.param('id'));
     const body = await c.req.json();
     
-    // 检查是否存在
-    const existing = await DB.query('app_versions').where({ id }).first();
+    const db = c.env.DB;
+    const existing = await db.prepare('SELECT * FROM app_versions WHERE id = ?').bind(id).first();
+    
     if (!existing) {
       return c.json({
         success: false,
@@ -120,27 +153,27 @@ app.put('/:id', async (c) => {
       }, 404);
     }
     
-    // 更新字段
-    const updateData = {
-      ...existing,
-      ...body,
-      update_time: new Date().toISOString()
-    };
+    const now = new Date().toISOString();
     
-    // 移除不需要更新的字段
-    delete updateData.id;
-    delete updateData.create_time;
-    delete updateData.create_user;
+    await db.prepare(`
+      UPDATE app_versions SET 
+        name = ?, code = ?, parent_code = ?, package = ?, 
+        version = ?, url = ?, status = ?, update_user = ?, update_time = ?
+      WHERE id = ?
+    `).bind(
+      body.name || existing.name,
+      body.code || existing.code,
+      body.parent_code !== undefined ? body.parent_code : existing.parent_code,
+      body.package || existing.package,
+      body.version || existing.version,
+      body.url !== undefined ? body.url : existing.url,
+      body.status || existing.status,
+      body.update_user || existing.update_user,
+      now,
+      id
+    ).run();
     
-    const { UpdateBuilder } = await import('../db/index.js');
-    const { Database } = await import('../db/index.js');
-    const db = new Database(c.env);
-    
-    await new UpdateBuilder(db, 'app_versions', updateData)
-      .where({ id })
-      .execute();
-    
-    const updated = await DB.query('app_versions').where({ id }).first();
+    const updated = await db.prepare('SELECT * FROM app_versions WHERE id = ?').bind(id).first();
     
     return c.json({
       success: true,
@@ -160,9 +193,9 @@ app.put('/:id', async (c) => {
 app.delete('/:id', async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
+    const db = c.env.DB;
     
-    // 检查是否存在
-    const existing = await DB.query('app_versions').where({ id }).first();
+    const existing = await db.prepare('SELECT * FROM app_versions WHERE id = ?').bind(id).first();
     if (!existing) {
       return c.json({
         success: false,
@@ -170,13 +203,7 @@ app.delete('/:id', async (c) => {
       }, 404);
     }
     
-    const { DeleteBuilder } = await import('../db/index.js');
-    const { Database } = await import('../db/index.js');
-    const db = new Database(c.env);
-    
-    await new DeleteBuilder(db, 'app_versions')
-      .where({ id })
-      .execute();
+    await db.prepare('DELETE FROM app_versions WHERE id = ?').bind(id).run();
     
     return c.json({
       success: true,
