@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 const app = new Hono();
 
 /**
- * @api {get} /admin/tokens Token 管理页面
+ * @api {get} /tokens Token 管理页面
  */
 app.get('/tokens', async (c) => {
   return c.html(`<!DOCTYPE html>
@@ -62,7 +62,7 @@ app.get('/tokens', async (c) => {
     let allData=[],filteredData=[];
     async function loadData(){
       try{
-        const res=await fetch('/api/admin/tokens');
+        const res=await fetch('/admin/api/tokens');
         const data=await res.json();
         if(data.success){allData=data.data;filteredData=[...allData];renderTable();}
         else{document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="empty">加载失败：'+data.error+'</td></tr>';}
@@ -95,7 +95,7 @@ app.get('/tokens', async (c) => {
     async function toggleStatus(id,status){
       if(!confirm(\`确定要\${status===1?'禁用':'启用'}这个 Token 吗？\`))return;
       try{
-        const res=await fetch('/api/admin/tokens/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status===1?0:1})});
+        const res=await fetch('/admin/api/tokens/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status===1?0:1})});
         const result=await res.json();
         if(result.success){alert('操作成功');loadData();}else{alert('操作失败：'+result.error);}
       }catch(e){alert('请求失败：'+e.message);}
@@ -107,9 +107,9 @@ app.get('/tokens', async (c) => {
 });
 
 /**
- * @api {get} /api/admin/tokens 获取 Token 列表
+ * @api {get} /api/tokens 获取 Token 列表
  */
-app.get('/api/admin/tokens', async (c) => {
+app.get('/api/tokens', async (c) => {
   try {
     const db = c.env.DB;
     const result = await db.prepare(`
@@ -130,9 +130,9 @@ app.get('/api/admin/tokens', async (c) => {
 });
 
 /**
- * @api {put} /api/admin/tokens/:id 更新 Token 状态
+ * @api {put} /api/tokens/:id 更新 Token 状态
  */
-app.put('/api/admin/tokens/:id', async (c) => {
+app.put('/api/tokens/:id', async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
     const body = await c.req.json();

@@ -24,7 +24,7 @@ app.use('*', prettyJSON());
 const visitMiddleware = createVisitMiddleware();
 app.use('/api/*', async (c, next) => {
   // 不记录管理后台的 API
-  if (c.req.path.startsWith('/api/admin/')) {
+  if (c.req.path.startsWith('/admin/api/')) {
     return await next();
   }
   await visitMiddleware(c, next);
