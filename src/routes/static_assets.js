@@ -300,6 +300,24 @@ if (typeof loadStats === 'function') loadStats();
     'Content-Type': 'application/javascript',
     'Cache-Control': 'public, max-age=31536000'
   });
+
+// Tokens JS
+app.get('/js/tokens.js', (c) => {
+  const tokensCode = \`
+let allData=[],filteredData=[];
+async function loadData(){try{const res=await fetch('/api/admin/tokens');const data=await res.json();if(data.success){allData=data.data;filteredData=[...allData];renderTable();}else{document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="empty">加载失败</td></tr>';} }catch(e){document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="empty">加载失败</td></tr>';} }
+function filterData(){const status=document.getElementById('filter-status').value;const search=document.getElementById('search').value.toLowerCase();filteredData=allData.filter(d=>{if(status&&d.status!=status)return false;if(search&&!d.user.toLowerCase().includes(search)&&!d.token.toLowerCase().includes(search))return false;return true;});renderTable();}
+function renderTable(){const tbody=document.getElementById('table-body');if(filteredData.length===0){tbody.innerHTML='<tr><td colspan="7" class="empty">暂无数据</td></tr>';return;} tbody.innerHTML=filteredData.map(d=>\`<tr><td>\${d.id}</td><td>\${d.user}</td><td><span class="token-code">\${d.token.substring(0,20)}...</span><button class="copy-btn" onclick="copyToken('\${d.token}')">📋复制</button></td><td><span class="status status-\${d.status}">\${d.status===1?'启用':'禁用'}</span></td><td>\${d.create_user||'-'}</td><td>\${new Date(d.create_time).toLocaleString()}</td><td><button class="btn btn-secondary" onclick="toggleStatus(\${d.id},\${d.status})" style="padding:6px 12px;font-size:12px;">\${d.status===1?'禁用':'启用'}</button></td></tr>\`).join('');}
+function copyToken(token){navigator.clipboard.writeText(token);alert('Token 已复制到剪贴板');}
+async function toggleStatus(id,status){if(!confirm(\`确定要\${status===1?'禁用':'启用'}这个 Token 吗？\`))return;try{const res=await fetch('/api/admin/tokens/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status===1?0:1})});const result=await res.json();if(result.success){alert('操作成功');loadData();}else{alert('操作失败：'+result.error);} }catch(e){alert('请求失败：'+e.message);} }
+loadData();
+  \`.trim();
+  return c.body(tokensCode, 200, {
+    'Content-Type': 'application/javascript',
+    'Cache-Control': 'public, max-age=31536000'
+  });
+});
+
 });
 
 
