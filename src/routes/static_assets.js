@@ -4,12 +4,11 @@ const app = new Hono();
 
 /**
  * 静态资源服务
- * 注意：Cloudflare Workers 需要手动处理静态文件
- * 这里返回内联的 JS 代码
+ * 内联返回 JS 代码（Cloudflare Workers 不服务外部文件）
  */
 
-// MD5 JS
-app.get('/assets/js/md5.js', (c) => {
+// MD5 JS - 路径是相对的（相对于 /assets）
+app.get('/js/md5.js', (c) => {
   const md5Code = `
 function md5(string) {
   function RotateLeft(lValue, iShiftBits) {
@@ -190,7 +189,7 @@ function md5(string) {
 });
 
 // Admin JS
-app.get('/assets/js/admin.js', (c) => {
+app.get('/js/admin.js', (c) => {
   const adminCode = `
 let isLoggedIn = false;
 
@@ -253,7 +252,7 @@ if (typeof checkAuth === 'function') checkAuth();
 });
 
 // Dashboard JS
-app.get('/assets/js/dashboard.js', (c) => {
+app.get('/js/dashboard.js', (c) => {
   const dashboardCode = `
 async function loadStats() {
   try {
