@@ -64,6 +64,36 @@ CREATE INDEX IF NOT EXISTS idx_json_data_parent_code ON json_data(parent_code);
 CREATE INDEX IF NOT EXISTS idx_json_data_status ON json_data(status);
 
 -- ============================================
+-- API 访问记录表
+-- ============================================
+CREATE TABLE IF NOT EXISTS visit_log (
+  visit_id TEXT PRIMARY KEY,
+  visit_time TEXT NOT NULL,
+  user_id TEXT,
+  session_id TEXT,
+  method TEXT NOT NULL,
+  request_url TEXT NOT NULL,
+  request_path TEXT NOT NULL,
+  query_string TEXT,
+  referrer_url TEXT,
+  user_agent TEXT,
+  remote_ip TEXT,
+  remote_port INTEGER,
+  server_ip TEXT,
+  server_port INTEGER,
+  status_code INTEGER,
+  response_time_ms INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_visit_log_time ON visit_log(visit_time);
+CREATE INDEX IF NOT EXISTS idx_visit_log_user ON visit_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_visit_log_session ON visit_log(session_id);
+CREATE INDEX IF NOT EXISTS idx_visit_log_method ON visit_log(method);
+CREATE INDEX IF NOT EXISTS idx_visit_log_path ON visit_log(request_path);
+CREATE INDEX IF NOT EXISTS idx_visit_log_status ON visit_log(status_code);
+
+-- ============================================
 -- 示例数据
 -- ============================================
 

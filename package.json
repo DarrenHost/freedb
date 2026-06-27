@@ -1,6 +1,6 @@
 {
   "name": "freedb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "基于 Cloudflare D1 的轻量级自由数据库解决方案",
   "main": "src/index.js",
   "type": "module",
