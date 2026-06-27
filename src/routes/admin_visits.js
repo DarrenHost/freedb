@@ -84,7 +84,7 @@ app.get('/visits', async (c) => {
     let allData=[],filteredData=[],page=1,pageSize=50;
     async function loadData(){
       try{
-        const res=await fetch('/admin/api/visits');
+        const res=await fetch('/api/admin/visits');
         const data=await res.json();
         if(data.success){allData=data.data;filteredData=[...allData];renderTable();calcStats();}
         else{document.getElementById('table-body').innerHTML='<tr><td colspan="7" class="empty">加载失败：'+data.error+'</td></tr>';}
@@ -143,9 +143,9 @@ app.get('/visits', async (c) => {
 });
 
 /**
- * @api {get} /admin/api/visits 获取访问记录（内部 API）
+ * @api {get} /api/admin/visits 获取访问记录（内部 API）
  */
-app.get('/api/visits', async (c) => {
+app.get('/api/admin/visits', async (c) => {
   try {
     const db = c.env.DB;
     const result = await db.prepare(`
